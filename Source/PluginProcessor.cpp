@@ -1,25 +1,17 @@
-/*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
-
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
 //==============================================================================
 FiltEQAudioProcessor::FiltEQAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
-    : AudioProcessor(BusesProperties()
-#if !JucePlugin_IsMidiEffect
-#if !JucePlugin_IsSynth
-                         .withInput("Input", juce::AudioChannelSet::stereo(), true)
-#endif
-                         .withOutput("Output", juce::AudioChannelSet::stereo(), true)
-#endif
-      )
+     : AudioProcessor (BusesProperties()
+                     #if ! JucePlugin_IsMidiEffect
+                      #if ! JucePlugin_IsSynth
+                       .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
+                      #endif
+                       .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
+                     #endif
+                       )
 #endif
 {
 }
@@ -36,29 +28,29 @@ const juce::String FiltEQAudioProcessor::getName() const
 
 bool FiltEQAudioProcessor::acceptsMidi() const
 {
-#if JucePlugin_WantsMidiInput
+   #if JucePlugin_WantsMidiInput
     return true;
-#else
+   #else
     return false;
-#endif
+   #endif
 }
 
 bool FiltEQAudioProcessor::producesMidi() const
 {
-#if JucePlugin_ProducesMidiOutput
+   #if JucePlugin_ProducesMidiOutput
     return true;
-#else
+   #else
     return false;
-#endif
+   #endif
 }
 
 bool FiltEQAudioProcessor::isMidiEffect() const
 {
-#if JucePlugin_IsMidiEffect
+   #if JucePlugin_IsMidiEffect
     return true;
-#else
+   #else
     return false;
-#endif
+   #endif
 }
 
 double FiltEQAudioProcessor::getTailLengthSeconds() const
@@ -68,8 +60,8 @@ double FiltEQAudioProcessor::getTailLengthSeconds() const
 
 int FiltEQAudioProcessor::getNumPrograms()
 {
-    return 1; // NB: some hosts don't cope very well if you tell them there are 0 programs,
-              // so this should be at least 1, even if you're not really implementing programs.
+    return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
+                // so this should be at least 1, even if you're not really implementing programs.
 }
 
 int FiltEQAudioProcessor::getCurrentProgram()
@@ -77,21 +69,21 @@ int FiltEQAudioProcessor::getCurrentProgram()
     return 0;
 }
 
-void FiltEQAudioProcessor::setCurrentProgram(int index)
+void FiltEQAudioProcessor::setCurrentProgram (int index)
 {
 }
 
-const juce::String FiltEQAudioProcessor::getProgramName(int index)
+const juce::String FiltEQAudioProcessor::getProgramName (int index)
 {
     return {};
 }
 
-void FiltEQAudioProcessor::changeProgramName(int index, const juce::String &newName)
+void FiltEQAudioProcessor::changeProgramName (int index, const juce::String& newName)
 {
 }
 
 //==============================================================================
-void FiltEQAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
+void FiltEQAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
@@ -104,34 +96,35 @@ void FiltEQAudioProcessor::releaseResources()
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
-bool FiltEQAudioProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const
+bool FiltEQAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
-#if JucePlugin_IsMidiEffect
-    juce::ignoreUnused(layouts);
+  #if JucePlugin_IsMidiEffect
+    juce::ignoreUnused (layouts);
     return true;
-#else
+  #else
     // This is the place where you check if the layout is supported.
     // In this template code we only support mono or stereo.
     // Some plugin hosts, such as certain GarageBand versions, will only
     // load plugins that support stereo bus layouts.
-    if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono() && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
+    if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
+     && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
         return false;
 
-        // This checks if the input layout matches the output layout
-#if !JucePlugin_IsSynth
+    // This checks if the input layout matches the output layout
+   #if ! JucePlugin_IsSynth
     if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
         return false;
-#endif
+   #endif
 
     return true;
-#endif
+  #endif
 }
 #endif
 
-void FiltEQAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages)
+void FiltEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels = getTotalNumInputChannels();
+    auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
     // In case we have more outputs than inputs, this code clears any output
@@ -141,7 +134,7 @@ void FiltEQAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::
     // when they first compile a plugin, but obviously you don't need to keep
     // this code if your algorithm always overwrites all the output channels.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear(i, 0, buffer.getNumSamples());
+        buffer.clear (i, 0, buffer.getNumSamples());
 
     // This is the place where you'd normally do the guts of your plugin's
     // audio processing...
@@ -151,7 +144,7 @@ void FiltEQAudioProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::
     // interleaved by keeping the same state.
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
-        auto *channelData = buffer.getWritePointer(channel);
+        auto* channelData = buffer.getWritePointer (channel);
 
         // ..do something to the data...
     }
@@ -163,20 +156,20 @@ bool FiltEQAudioProcessor::hasEditor() const
     return true; // (change this to false if you choose to not supply an editor)
 }
 
-juce::AudioProcessorEditor *FiltEQAudioProcessor::createEditor()
+juce::AudioProcessorEditor* FiltEQAudioProcessor::createEditor()
 {
-    return new FiltEQAudioProcessorEditor(*this);
+    return new juce::GenericAudioProcessorEditor(*this);
 }
 
 //==============================================================================
-void FiltEQAudioProcessor::getStateInformation(juce::MemoryBlock &destData)
+void FiltEQAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
 }
 
-void FiltEQAudioProcessor::setStateInformation(const void *data, int sizeInBytes)
+void FiltEQAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
@@ -184,7 +177,39 @@ void FiltEQAudioProcessor::setStateInformation(const void *data, int sizeInBytes
 
 //==============================================================================
 // This creates new instances of the plugin..
-juce::AudioProcessor *JUCE_CALLTYPE createPluginFilter()
+juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new FiltEQAudioProcessor();
+}
+
+// AudioParameterFloat represents parameters with a continuous knob/slider
+
+
+// Low Cut Parameters
+juce::AudioProcessorValueTreeState::ParameterLayout FiltEQAudioProcessor::parameterLayoutCreation()
+{
+    juce::AudioProcessorValueTreeState::ParameterLayout pluginLayout; // Overall plugin Layout
+    
+    juce::StringArray filterCutoffChoices; // String Array Comprising of choices of how steep the filter cutoff is
+    for (int i=0; i<4; i++)
+    {
+        juce::String value;
+        value << (12 + i*12);
+        value << " db/Oct";
+        filterCutoffChoices.add(value);
+    }
+    
+    pluginLayout.add(std::make_unique<juce::AudioParameterFloat>("Low Cut Freq", "Low Cut Freq", juce::NormalisableRange<float>(20.f, 20000.f, 0.1f, 0.5f), 20.f)); // Low Cut Freq
+    pluginLayout.add(std::make_unique<juce::AudioParameterChoice>("Low Cut Slope", "Low Cut Slope", filterCutoffChoices, 0)); // Low Cut Slope
+    
+    pluginLayout.add(std::make_unique<juce::AudioParameterFloat>("High Cut Freq", "High Cut Freq", juce::NormalisableRange<float>(20.f, 20000.f, 0.1f, 0.5f), 20000.f)); // High Cut Freq
+    pluginLayout.add(std::make_unique<juce::AudioParameterChoice>("High Cut Slope", "High Cut Slope", filterCutoffChoices, 0)); // High Cut Slope
+    
+    pluginLayout.add(std::make_unique<juce::AudioParameterFloat>("Peak Frequency", "Peak Frequency", juce::NormalisableRange<float>(20.f, 20000.f, 0.1f, 0.5f), 1000.f)); // Peak Freq
+    pluginLayout.add(std::make_unique<juce::AudioParameterFloat>("Peak Gain", "Peak Gain", juce::NormalisableRange<float>(-24.f, 24.f, 0.5f, 1.f), 0.f)); // Peak Gain
+    pluginLayout.add(std::make_unique<juce::AudioParameterFloat>("Peak Quality", "Peak Quality", juce::NormalisableRange<float>(0.1f, 10.f, 0.05f, 1.f), 1.f)); // Peak Quality
+    
+    
+    
+    return pluginLayout;
 }
