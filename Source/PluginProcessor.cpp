@@ -85,8 +85,16 @@ void FiltEQAudioProcessor::changeProgramName (int index, const juce::String& new
 //==============================================================================
 void FiltEQAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
+    // Here we prepare our filters before using them and to do so, we need to pass in a process spec object to the chain which then passes it to each link in the chain
+
+    juce::dsp::ProcessSpec spec;
+    spec.maximumBlockSize = samplesPerBlock; // we pass in these 3 values to our spec object
+    spec.numChannels = 1;
+    spec.sampleRate = sampleRate;
+    
+    leftChannel.prepare(spec);
+    rightChannel.prepare(spec);
+    
 }
 
 void FiltEQAudioProcessor::releaseResources()
@@ -135,19 +143,19 @@ void FiltEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     // this code if your algorithm always overwrites all the output channels.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
-
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto* channelData = buffer.getWritePointer (channel);
-
-        // ..do something to the data...
-    }
+    
+    // Here we take our audio buffer, split it into channels, wrap it in an ProcessingContext which we can then ask our chains to process
+    
+    juce::dsp::AudioBlock<float> block(buffer); // Create Audio Block from buffer
+    
+    auto leftBlock = block.getSingleChannelBlock(0);
+    auto rightBlock = block.getSingleChannelBlock(1);
+    
+    juce::dsp::ProcessContextReplacing<float> leftContext(leftBlock);
+    juce::dsp::ProcessContextReplacing<float> rightContext(rightBlock);
+    
+    leftChannel.process(leftContext);
+    rightChannel.process(rightContext);
 }
 
 //==============================================================================

@@ -49,6 +49,14 @@ public:
     juce::AudioProcessorValueTreeState apvts {*this, nullptr, "Parameters", parameterLayoutCreation()} ; // Object that coordinates syncing of parameters between gui knobs and dsp variables
 
 private:
+    using Filter = juce::dsp::IIR::Filter<float>; // type namespace to avoid always having to write out nested namespaces
+    
+    // The dsp namespace in JUCE works by defining a chain and passing a processing context which will run through each element of the chain automatically
+    using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>; // Chain has 4 filters since the default one is 12db/oct and we need it to go up to 48db/oct
+    using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>; // Represents the layout of our EQ where we have a cut on either end and a parametric filter in the middle
+    MonoChain leftChannel, rightChannel;
+    
+    
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FiltEQAudioProcessor)
 };
