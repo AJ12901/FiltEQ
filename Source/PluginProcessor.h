@@ -5,6 +5,16 @@
 //==============================================================================
 /**
 */
+
+struct ChainSettings // Stores Parameter Settings
+{
+    float peakFreq{0}, peakGainInDecibels{0}, peakQuality{1.f};
+    float lowCutFreq {0}, highCutFreq {0};
+    int lowCutSlope {0}, highCutSlope {0};
+};
+
+ChainSettings getChainSettings(juce::AudioProcessorValueTreeState &apvts); // used by processBlock and prepareToPlay to receive ChainSettings
+
 class FiltEQAudioProcessor  : public juce::AudioProcessor
 {
 public:
@@ -55,6 +65,11 @@ private:
     using CutFilter = juce::dsp::ProcessorChain<Filter, Filter, Filter, Filter>; // Chain has 4 filters since the default one is 12db/oct and we need it to go up to 48db/oct
     using MonoChain = juce::dsp::ProcessorChain<CutFilter, Filter, CutFilter>; // Represents the layout of our EQ where we have a cut on either end and a parametric filter in the middle
     MonoChain leftChannel, rightChannel;
+    
+    enum ChainPositions
+    {
+        LowCut, Peak, HighCut
+    };
     
     
     //==============================================================================

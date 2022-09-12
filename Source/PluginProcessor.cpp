@@ -95,6 +95,11 @@ void FiltEQAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
     leftChannel.prepare(spec);
     rightChannel.prepare(spec);
     
+    auto chainSettings = getChainSettings(apvts);
+    auto peakCoefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate, chainSettings.peakFreq, chainSettings.peakQuality, juce::Decibels::decibelsToGain(chainSettings.peakGainInDecibels));
+    
+    *leftChannel.get<ChainPositions::Peak>().coefficients = *peakCoefficients;
+    *rightChannel.get<ChainPositions::Peak>().coefficients = *peakCoefficients;
 }
 
 void FiltEQAudioProcessor::releaseResources()
@@ -144,6 +149,13 @@ void FiltEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
     
+    
+    auto chainSettings = getChainSettings(apvts);
+    auto peakCoefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), chainSettings.peakFreq, chainSettings.peakQuality, juce::Decibels::decibelsToGain(chainSettings.peakGainInDecibels));
+    
+    *leftChannel.get<ChainPositions::Peak>().coefficients = *peakCoefficients;
+    *rightChannel.get<ChainPositions::Peak>().coefficients = *peakCoefficients;
+    
     // Here we take our audio buffer, split it into channels, wrap it in an ProcessingContext which we can then ask our chains to process
     
     juce::dsp::AudioBlock<float> block(buffer); // Create Audio Block from buffer
@@ -192,6 +204,20 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 
 // AudioParameterFloat represents parameters with a continuous knob/slider
 
+ChainSettings getChainSettings(juce::AudioProcessorValueTreeState &apvts) // loads the raw values of our parameters into ChainSettings which is then called later in the processBlock and prepareToPlay functions
+{
+    ChainSettings settings;
+    
+    settings.lowCutFreq = apvts.getRawParameterValue("Low Cut Freq")->load();
+    settings.highCutFreq = apvts.getRawParameterValue("High Cut Freq")->load();
+    settings.peakFreq = apvts.getRawParameterValue("Peak Frequency")->load();
+    settings.peakGainInDecibels = apvts.getRawParameterValue("Peak Gain")->load();
+    settings.peakQuality = apvts.getRawParameterValue("Peak Quality")->load();
+    settings.lowCutSlope = apvts.getRawParameterValue("Low Cut Slope")->load();
+    settings.highCutSlope = apvts.getRawParameterValue("High Cut Slope")->load();
+    
+    return settings;
+}
 
 // Low Cut Parameters
 juce::AudioProcessorValueTreeState::ParameterLayout FiltEQAudioProcessor::parameterLayoutCreation()
