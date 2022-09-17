@@ -81,7 +81,15 @@ private:
     static void updateCoefficients(Coefficients &old, const Coefficients& replacements);
     
     template<typename ChainType, typename CoefficientType>
-    void updateCutFilter(ChainType &leftLowCut, const CoefficientType &cutCoefficients, const Slope &lowCutSlope);
+    void updateCutFilter(ChainType &chain, const CoefficientType &coefficients, const Slope &slope);
+    
+    template<int Index, typename ChainType, typename CoefficientType>
+    void update(ChainType &chain, const CoefficientType &coefficients);
+    
+    void updateLowCutFilters(const ChainSettings &chainSettings);
+    void updateHighCutFilters(const ChainSettings &chainSettings);
+    void updateFilters();
+    
     
     
     //==============================================================================
