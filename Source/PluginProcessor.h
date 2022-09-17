@@ -6,11 +6,16 @@
 /**
 */
 
+enum Slope
+{
+    Slope_12, Slope_24, Slope_36, Slope_48
+};
+
 struct ChainSettings // Stores Parameter Settings
 {
     float peakFreq{0}, peakGainInDecibels{0}, peakQuality{1.f};
     float lowCutFreq {0}, highCutFreq {0};
-    int lowCutSlope {0}, highCutSlope {0};
+    Slope lowCutSlope {Slope::Slope_12}, highCutSlope {Slope::Slope_12};
 };
 
 ChainSettings getChainSettings(juce::AudioProcessorValueTreeState &apvts); // used by processBlock and prepareToPlay to receive ChainSettings
@@ -70,6 +75,13 @@ private:
     {
         LowCut, Peak, HighCut
     };
+    
+    void updatePeakFilter (const ChainSettings& chainSettings);
+    using Coefficients = Filter::CoefficientsPtr;
+    static void updateCoefficients(Coefficients &old, const Coefficients& replacements);
+    
+    template<typename ChainType, typename CoefficientType>
+    void updateCutFilter(ChainType &leftLowCut, const CoefficientType &cutCoefficients, const Slope &lowCutSlope);
     
     
     //==============================================================================
