@@ -64,6 +64,7 @@ private:
     FiltEQAudioProcessor& audioProcessor;
     juce::Atomic<bool> parametersChanged {false};
     MonoChain monoChain;
+    void updateChain();
 };
 
 //==============================================================================
