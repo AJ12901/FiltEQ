@@ -200,7 +200,7 @@ bool FiltEQAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* FiltEQAudioProcessor::createEditor()
 {
-    return new juce::GenericAudioProcessorEditor(*this);
+    return new FiltEQAudioProcessorEditor (*this);
 }
 
 //==============================================================================
@@ -209,12 +209,20 @@ void FiltEQAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
+    juce::MemoryOutputStream state(destData, true);
+    apvts.state.writeToStream(state);
 }
 
 void FiltEQAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
+    auto tree = juce::ValueTree::readFromData(data, sizeInBytes);
+    if (tree.isValid())
+    {
+        apvts.replaceState(tree);
+        updateFilters();
+    }
 }
 
 //==============================================================================
@@ -241,23 +249,31 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState &apvts) // loa
     return settings;
 }
 
+Coefficients makePeakFilter(const ChainSettings &chainSettings, double sampleRate)
+{
+    return juce::dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate, chainSettings.peakFreq, chainSettings.peakQuality, juce::Decibels::decibelsToGain(chainSettings.peakGainInDecibels));
+    
+}
+
 void FiltEQAudioProcessor::updatePeakFilter (const ChainSettings& chainSettings)
 {
-    auto peakCoefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), chainSettings.peakFreq, chainSettings.peakQuality, juce::Decibels::decibelsToGain(chainSettings.peakGainInDecibels));
+//    auto peakCoefficients = juce::dsp::IIR::Coefficients<float>::makePeakFilter(getSampleRate(), chainSettings.peakFreq, chainSettings.peakQuality, juce::Decibels::decibelsToGain(chainSettings.peakGainInDecibels));
   
+    auto peakCoefficients = makePeakFilter(chainSettings, getSampleRate());
+    
     updateCoefficients(leftChannel.get<ChainPositions::Peak>().coefficients, peakCoefficients);
     updateCoefficients(rightChannel.get<ChainPositions::Peak>().coefficients, peakCoefficients);
 }
 
 template<int Index, typename ChainType, typename CoefficientType>
-void FiltEQAudioProcessor::update(ChainType &chain, const CoefficientType &coefficients)
+void update(ChainType &chain, const CoefficientType &coefficients)
 {
     updateCoefficients(chain.template get<Index>().coefficients, coefficients[Index]);
     chain.template setBypassed<Index>(false);
 }
 
 template<typename ChainType, typename CoefficientType>
-void FiltEQAudioProcessor::updateCutFilter(ChainType &chain, const CoefficientType &coefficients, const Slope &slope)
+void updateCutFilter(ChainType &chain, const CoefficientType &coefficients, const Slope &slope)
 {
     chain.template setBypassed<0>(true);
     chain.template setBypassed<1>(true);
@@ -276,14 +292,14 @@ void FiltEQAudioProcessor::updateCutFilter(ChainType &chain, const CoefficientTy
     }
 }
 
-void FiltEQAudioProcessor::updateCoefficients(Coefficients &old, const Coefficients &replacements)
+void /*FiltEQAudioProcessor::*/updateCoefficients(Coefficients &old, const Coefficients &replacements)
 {
     *old = *replacements;
 }
 
 void FiltEQAudioProcessor::updateLowCutFilters(const ChainSettings &chainSettings)
 {
-    auto cutCoefficients = juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(chainSettings.lowCutFreq, getSampleRate(), 2*(chainSettings.lowCutSlope+1));
+    auto cutCoefficients = makeLowCutFilter(chainSettings, getSampleRate());
     auto &leftLowCut = leftChannel.get<ChainPositions::LowCut>();
     auto &rightLowCut = rightChannel.get<ChainPositions::LowCut>();
     updateCutFilter(leftLowCut, cutCoefficients, chainSettings.lowCutSlope);
@@ -292,7 +308,7 @@ void FiltEQAudioProcessor::updateLowCutFilters(const ChainSettings &chainSetting
 
 void FiltEQAudioProcessor::updateHighCutFilters(const ChainSettings &chainSettings)
 {
-    auto highCutCoefficients = juce::dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod(chainSettings.highCutFreq, getSampleRate(), 2*(chainSettings.highCutSlope+1));
+    auto highCutCoefficients = makeHighCutFilter(chainSettings, getSampleRate());
     auto &leftHighCut = leftChannel.get<ChainPositions::HighCut>();
     auto &rightHighCut = rightChannel.get<ChainPositions::HighCut>();
     updateCutFilter(leftHighCut, highCutCoefficients, chainSettings.highCutSlope);
