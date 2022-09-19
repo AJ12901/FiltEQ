@@ -17,11 +17,10 @@ void LookAndFeel::drawRotarySlider(juce::Graphics &g, int x, int y, int width, i
     
     auto bounds = Rectangle<float>(x, y, width, height);
     
-    g.setColour(Colours::blue);
+    g.setColour(Colour (0xff020d12));
+//    g.setColour(Colour (0xff03141e));
     g.fillEllipse(bounds);
-    
-    g.setColour(Colours::purple);
-    g.drawEllipse(bounds, 1.f);
+
     
     if (auto *rsw1 = dynamic_cast<RotarySliderWithLabels*>(&slider))
     {
@@ -34,13 +33,19 @@ void LookAndFeel::drawRotarySlider(juce::Graphics &g, int x, int y, int width, i
         r.setTop(bounds.getY());
         r.setBottom(center.getY() - rsw1->getTextHeight()*1.5);
         
-        p.addRoundedRectangle(r, 2.f);
-        
         jassert(rotaryStartAngle < rotaryEndAngle);
         
         auto sliderAngRad = jmap(sliderPosProportional, 0.f, 1.f, rotaryStartAngle, rotaryEndAngle);
         p.applyTransform(AffineTransform().rotated(sliderAngRad, center.getX(), center.getY()));
         g.fillPath(p);
+        
+        float w = width*0.5;
+        float h = height*0.5;
+        
+        Path curve;
+        curve.addCentredArc(center.getX(), center.getY(), w, h, rotaryStartAngle-juce::MathConstants<float>::pi, juce::MathConstants<float>::pi, sliderAngRad-(juce::MathConstants<float>::pi/4), true);
+        g.setColour(Colours::teal);
+        g.strokePath (curve, PathStrokeType(3.0));
         
         g.setFont(rsw1->getTextHeight());
         auto text = rsw1->getDisplayString();
@@ -49,9 +54,11 @@ void LookAndFeel::drawRotarySlider(juce::Graphics &g, int x, int y, int width, i
         r.setSize(strWidth + 4, rsw1->getTextHeight()+2);
         r.setCentre(bounds.getCentre());
         
-        g.setColour(Colours::black);
-        g.fillRect(r);
         g.setColour(Colours::white);
+        
+//       float y = mx + c;
+        
+        g.setFont(11.25);
         g.drawFittedText(text, r.toNearestInt(), juce::Justification::centred, 1);
     }
 }
@@ -81,10 +88,10 @@ void RotarySliderWithLabels::paint(juce::Graphics &g)
     auto range = getRange();
     auto sliderBounds = getSliderBounds();
     
-    g.setColour(Colours::red);
-    g.drawRect(getLocalBounds());
-    g.setColour(Colours::yellow);
-    g.drawRect(sliderBounds);
+//    g.setColour(Colours::red);
+//    g.drawRect(getLocalBounds());
+//    g.setColour(Colours::yellow);
+//    g.drawRect(sliderBounds);
     
     getLookAndFeel().drawRotarySlider(g, sliderBounds.getX(), sliderBounds.getY(), sliderBounds.getWidth(), sliderBounds.getHeight(),
                                       jmap(getValue(), range.getStart(), range.getEnd(), 0.0, 1.0),
@@ -168,6 +175,7 @@ void ResponseCurveComponent::paint (juce::Graphics& g)
     auto &lowcut = monoChain.get<ChainPositions::LowCut>();
     auto &peak = monoChain.get<ChainPositions::Peak>();
     auto &highcut = monoChain.get<ChainPositions::HighCut>();
+    auto &mid = monoChain.get<ChainPositions::Mid>();
     
     auto sampleRate = audioProcessor.getSampleRate();
     std::vector<double> mags;
@@ -181,6 +189,9 @@ void ResponseCurveComponent::paint (juce::Graphics& g)
         
         if (!monoChain.isBypassed<ChainPositions::Peak>())
             mag *= peak.coefficients->getMagnitudeForFrequency(freq, sampleRate);
+        
+        if (!monoChain.isBypassed<ChainPositions::Mid>())
+            mag *= mid.coefficients->getMagnitudeForFrequency(freq, sampleRate);
         
         if (!lowcut.isBypassed<0>())
             mag *= lowcut.get<0>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
@@ -222,7 +233,7 @@ void ResponseCurveComponent::paint (juce::Graphics& g)
     
     g.setColour (juce::Colour (0xff0b5574));
     g.drawRoundedRectangle(responseArea.toFloat(), 4.f, 1.f);
-    g.setColour(Colours::white);
+    g.setColour(Colours::cyan);
     g.strokePath(responseCurve, PathStrokeType(2.f));
 }
 
@@ -285,15 +296,20 @@ void FiltEQAudioProcessorEditor::resized()
     
     responseCurveComponent.setBounds(responseArea);
     
-    bounds.removeFromTop(7);
+    bounds.removeFromTop(8);
     
-    auto lowCutArea = bounds.removeFromLeft(bounds.getWidth() * 0.33);
+    auto lowCutArea = bounds.removeFromLeft(bounds.getWidth() * 0.3);
     lowCutFreqSlider.setBounds(lowCutArea.removeFromTop(lowCutArea.getHeight() * 0.5) );
     lowCutSlopeSlider.setBounds(lowCutArea);
     
-    auto highCutArea = bounds.removeFromRight(bounds.getWidth() * 0.5);
+    auto highCutArea = bounds.removeFromRight(bounds.getWidth() * 0.4286);
     highCutFreqSlider.setBounds(highCutArea.removeFromTop(highCutArea.getHeight() * 0.5) );
     highCutSlopeSlider.setBounds(highCutArea);
+    
+    auto midCutArea = bounds.removeFromRight(bounds.getWidth() * 0.5);
+    midFreqSlider.setBounds(midCutArea.removeFromTop(midCutArea.getHeight() * 0.33));
+    midGainSlider.setBounds(midCutArea.removeFromTop(midCutArea.getHeight() * 0.5));
+    midQualitySlider.setBounds(midCutArea);
     
     peakFreqSlider.setBounds(bounds.removeFromTop(bounds.getHeight() * 0.33));
     peakGainSlider.setBounds(bounds.removeFromTop(bounds.getHeight() * 0.5));

@@ -168,8 +168,8 @@ bool FiltEQAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* FiltEQAudioProcessor::createEditor()
 {
-//    return new FiltEQAudioProcessorEditor (*this);
-    return new juce::GenericAudioProcessorEditor(*this);
+    return new FiltEQAudioProcessorEditor (*this);
+//    return new juce::GenericAudioProcessorEditor(*this);
 }
 
 //==============================================================================
@@ -317,17 +317,17 @@ juce::AudioProcessorValueTreeState::ParameterLayout FiltEQAudioProcessor::parame
         filterCutoffChoices.add(value);
     }
     
-    pluginLayout.add(std::make_unique<juce::AudioParameterFloat>("Low Cut Freq", "Low Cut Freq", juce::NormalisableRange<float>(20.f, 20000.f, 0.1f, 0.5f), 20.f)); // Low Cut Freq
+    pluginLayout.add(std::make_unique<juce::AudioParameterFloat>("Low Cut Freq", "Low Cut Freq", juce::NormalisableRange<float>(20.f, 20000.f, 0.1f, 0.3f), 20.f)); // Low Cut Freq
     pluginLayout.add(std::make_unique<juce::AudioParameterChoice>("Low Cut Slope", "Low Cut Slope", filterCutoffChoices, 0)); // Low Cut Slope
     
-    pluginLayout.add(std::make_unique<juce::AudioParameterFloat>("High Cut Freq", "High Cut Freq", juce::NormalisableRange<float>(20.f, 20000.f, 0.1f, 0.5f), 2000.f)); // High Cut Freq
+    pluginLayout.add(std::make_unique<juce::AudioParameterFloat>("High Cut Freq", "High Cut Freq", juce::NormalisableRange<float>(20.f, 20000.f, 0.1f, 0.5f), 20000.f)); // High Cut Freq
     pluginLayout.add(std::make_unique<juce::AudioParameterChoice>("High Cut Slope", "High Cut Slope", filterCutoffChoices, 0)); // High Cut Slope
     
-    pluginLayout.add(std::make_unique<juce::AudioParameterFloat>("Peak Frequency", "Peak Frequency", juce::NormalisableRange<float>(20.f, 20000.f, 0.1f, 0.5f), 1000.f)); // Peak Freq
+    pluginLayout.add(std::make_unique<juce::AudioParameterFloat>("Peak Frequency", "Peak Frequency", juce::NormalisableRange<float>(20.f, 20000.f, 0.1f, 0.3f), 2000.f)); // Peak Freq
     pluginLayout.add(std::make_unique<juce::AudioParameterFloat>("Peak Gain", "Peak Gain", juce::NormalisableRange<float>(-24.f, 24.f, 0.5f, 1.f), 0.f)); // Peak Gain
     pluginLayout.add(std::make_unique<juce::AudioParameterFloat>("Peak Quality", "Peak Quality", juce::NormalisableRange<float>(0.1f, 10.f, 0.05f, 1.f), 1.f)); // Peak Quality
     
-    pluginLayout.add(std::make_unique<juce::AudioParameterFloat>("Mid Frequency", "Mid Frequency", juce::NormalisableRange<float>(20.f, 20000.f, 0.1f, 0.5f), 1000.f)); // Mid Freq
+    pluginLayout.add(std::make_unique<juce::AudioParameterFloat>("Mid Frequency", "Mid Frequency", juce::NormalisableRange<float>(20.f, 20000.f, 0.1f, 0.3f), 1000.f)); // Mid Freq
     pluginLayout.add(std::make_unique<juce::AudioParameterFloat>("Mid Gain", "Mid Gain", juce::NormalisableRange<float>(-24.f, 24.f, 0.5f, 1.f), 0.f)); // Mid Gain
     pluginLayout.add(std::make_unique<juce::AudioParameterFloat>("Mid Quality", "Mid Quality", juce::NormalisableRange<float>(0.1f, 10.f, 0.05f, 1.f), 1.f)); // Mid Quality
     
