@@ -95,22 +95,6 @@ void FiltEQAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
     leftChannel.prepare(spec);
     rightChannel.prepare(spec);
     
-//    auto chainSettings = getChainSettings(apvts);
-//
-//    updatePeakFilter(chainSettings);
-//
-//    auto lowCutCoefficients = juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(chainSettings.lowCutFreq, sampleRate, 2*(chainSettings.lowCutSlope+1));
-//    auto &leftLowCut = leftChannel.get<ChainPositions::LowCut>();
-//    auto &rightLowCut = rightChannel.get<ChainPositions::LowCut>();
-//    updateCutFilter(leftLowCut, lowCutCoefficients, chainSettings.lowCutSlope);
-//    updateCutFilter(rightLowCut, lowCutCoefficients, chainSettings.lowCutSlope);
-//
-//    auto highCutCoefficients = juce::dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod(chainSettings.highCutFreq, sampleRate, 2*(chainSettings.highCutSlope+1));
-//    auto &leftHighCut = leftChannel.get<ChainPositions::HighCut>();
-//    auto &rightHighCut = rightChannel.get<ChainPositions::HighCut>();
-//    updateCutFilter(leftHighCut, highCutCoefficients, chainSettings.highCutSlope);
-//    updateCutFilter(rightHighCut, highCutCoefficients, chainSettings.highCutSlope);
-    
     updateFilters();
 }
 
@@ -161,22 +145,6 @@ void FiltEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
     
-    
-//    auto chainSettings = getChainSettings(apvts);
-
-//    updatePeakFilter(chainSettings);
-//
-//    auto cutCoefficients = juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(chainSettings.lowCutFreq, getSampleRate(), 2*(chainSettings.lowCutSlope+1));
-//    auto &leftLowCut = leftChannel.get<ChainPositions::LowCut>();
-//    auto &rightLowCut = rightChannel.get<ChainPositions::LowCut>();
-//    updateCutFilter(leftLowCut, cutCoefficients, chainSettings.lowCutSlope);
-//    updateCutFilter(rightLowCut, cutCoefficients, chainSettings.lowCutSlope);
-//
-//    auto highCutCoefficients = juce::dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod(chainSettings.highCutFreq, getSampleRate(), 2*(chainSettings.highCutSlope+1));
-//    auto &leftHighCut = leftChannel.get<ChainPositions::HighCut>();
-//    auto &rightHighCut = rightChannel.get<ChainPositions::HighCut>();
-//    updateCutFilter(leftHighCut, highCutCoefficients, chainSettings.highCutSlope);
-//    updateCutFilter(rightHighCut, highCutCoefficients, chainSettings.highCutSlope);
     updateFilters();
         
     // Here we take our audio buffer, split it into channels, wrap it in an ProcessingContext which we can then ask our chains to process
@@ -200,23 +168,19 @@ bool FiltEQAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* FiltEQAudioProcessor::createEditor()
 {
-    return new FiltEQAudioProcessorEditor (*this);
+//    return new FiltEQAudioProcessorEditor (*this);
+    return new juce::GenericAudioProcessorEditor(*this);
 }
 
 //==============================================================================
 void FiltEQAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
     juce::MemoryOutputStream state(destData, true);
     apvts.state.writeToStream(state);
 }
 
 void FiltEQAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
     auto tree = juce::ValueTree::readFromData(data, sizeInBytes);
     if (tree.isValid())
     {
@@ -245,6 +209,9 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState &apvts) // loa
     settings.peakQuality = apvts.getRawParameterValue("Peak Quality")->load();
     settings.lowCutSlope = static_cast<Slope>(apvts.getRawParameterValue("Low Cut Slope")->load());
     settings.highCutSlope = static_cast<Slope>(apvts.getRawParameterValue("High Cut Slope")->load());
+    settings.midFreq = apvts.getRawParameterValue("Mid Frequency")->load();
+    settings.midGainInDecibels = apvts.getRawParameterValue("Mid Gain")->load();
+    settings.midQuality = apvts.getRawParameterValue("Mid Quality")->load();
     
     return settings;
 }
@@ -252,7 +219,11 @@ ChainSettings getChainSettings(juce::AudioProcessorValueTreeState &apvts) // loa
 Coefficients makePeakFilter(const ChainSettings &chainSettings, double sampleRate)
 {
     return juce::dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate, chainSettings.peakFreq, chainSettings.peakQuality, juce::Decibels::decibelsToGain(chainSettings.peakGainInDecibels));
-    
+}
+
+Coefficients makeMidFilter(const ChainSettings &chainSettings, double sampleRate)
+{
+    return juce::dsp::IIR::Coefficients<float>::makePeakFilter(sampleRate, chainSettings.midFreq, chainSettings.midQuality, juce::Decibels::decibelsToGain(chainSettings.midGainInDecibels));
 }
 
 void FiltEQAudioProcessor::updatePeakFilter (const ChainSettings& chainSettings)
@@ -263,6 +234,13 @@ void FiltEQAudioProcessor::updatePeakFilter (const ChainSettings& chainSettings)
     
     updateCoefficients(leftChannel.get<ChainPositions::Peak>().coefficients, peakCoefficients);
     updateCoefficients(rightChannel.get<ChainPositions::Peak>().coefficients, peakCoefficients);
+}
+
+void FiltEQAudioProcessor::updateMidFilter (const ChainSettings& chainSettings)
+{
+    auto midCoefficients = makeMidFilter(chainSettings, getSampleRate());
+    updateCoefficients(leftChannel.get<ChainPositions::Mid>().coefficients, midCoefficients);
+    updateCoefficients(rightChannel.get<ChainPositions::Mid>().coefficients, midCoefficients);
 }
 
 template<int Index, typename ChainType, typename CoefficientType>
@@ -321,6 +299,7 @@ void FiltEQAudioProcessor::updateFilters()
     
     updateLowCutFilters(chainSettings);
     updatePeakFilter(chainSettings);
+    updateMidFilter(chainSettings);
     updateHighCutFilters(chainSettings);
 }
 
@@ -348,7 +327,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout FiltEQAudioProcessor::parame
     pluginLayout.add(std::make_unique<juce::AudioParameterFloat>("Peak Gain", "Peak Gain", juce::NormalisableRange<float>(-24.f, 24.f, 0.5f, 1.f), 0.f)); // Peak Gain
     pluginLayout.add(std::make_unique<juce::AudioParameterFloat>("Peak Quality", "Peak Quality", juce::NormalisableRange<float>(0.1f, 10.f, 0.05f, 1.f), 1.f)); // Peak Quality
     
-    
+    pluginLayout.add(std::make_unique<juce::AudioParameterFloat>("Mid Frequency", "Mid Frequency", juce::NormalisableRange<float>(20.f, 20000.f, 0.1f, 0.5f), 1000.f)); // Mid Freq
+    pluginLayout.add(std::make_unique<juce::AudioParameterFloat>("Mid Gain", "Mid Gain", juce::NormalisableRange<float>(-24.f, 24.f, 0.5f, 1.f), 0.f)); // Mid Gain
+    pluginLayout.add(std::make_unique<juce::AudioParameterFloat>("Mid Quality", "Mid Quality", juce::NormalisableRange<float>(0.1f, 10.f, 0.05f, 1.f), 1.f)); // Mid Quality
     
     return pluginLayout;
 }

@@ -86,13 +86,13 @@ private:
     
 //    juce::Atomic<bool> parametersChanged {false};
     
-    RotarySliderWithLabels peakFreqSlider, peakGainSlider, peakQualitySlider, lowCutFreqSlider, highCutFreqSlider, lowCutSlopeSlider, highCutSlopeSlider;
+    RotarySliderWithLabels peakFreqSlider, peakGainSlider, peakQualitySlider, lowCutFreqSlider, highCutFreqSlider, lowCutSlopeSlider, highCutSlopeSlider, midFreqSlider, midGainSlider, midQualitySlider;
     
     ResponseCurveComponent responseCurveComponent;
     
     using APVTS = juce::AudioProcessorValueTreeState; // typename aliases since these names are quite long
     using Attachment = APVTS::SliderAttachment;
-    Attachment peakFreqSliderAttachment, peakGainSliderAttachment, peakQualitySliderAttachment, lowCutFreqSliderAttachment, highCutFreqSliderAttachment, lowCutSlopeSliderAttachment, highCutSlopeSliderAttachment;
+    Attachment peakFreqSliderAttachment, peakGainSliderAttachment, peakQualitySliderAttachment, lowCutFreqSliderAttachment, highCutFreqSliderAttachment, lowCutSlopeSliderAttachment, highCutSlopeSliderAttachment, midFreqSliderAttachment, midGainSliderAttachment, midQualitySliderAttachment;
     
 //    MonoChain monoChain; // adding a dedicated monochain for the editor
     

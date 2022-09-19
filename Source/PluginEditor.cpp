@@ -147,6 +147,9 @@ void ResponseCurveComponent::updateChain()
     auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
     updateCoefficients(monoChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
     
+    auto midCoefficients = makeMidFilter(chainSettings, audioProcessor.getSampleRate());
+    updateCoefficients(monoChain.get<ChainPositions::Mid>().coefficients, midCoefficients);
+    
     auto lowCutCoefficients = makeLowCutFilter(chainSettings, audioProcessor.getSampleRate());
     auto highCutCoefficients = makeHighCutFilter(chainSettings, audioProcessor.getSampleRate());
     updateCutFilter(monoChain.get<ChainPositions::LowCut>(), lowCutCoefficients, chainSettings.lowCutSlope);
@@ -235,6 +238,9 @@ lowCutFreqSlider(*audioProcessor.apvts.getParameter("Low Cut Freq"), "Hz"),
 highCutFreqSlider(*audioProcessor.apvts.getParameter("High Cut Freq"), "Hz"),
 lowCutSlopeSlider(*audioProcessor.apvts.getParameter("Low Cut Slope"), "dB/Oct"),
 highCutSlopeSlider(*audioProcessor.apvts.getParameter("High Cut Slope"), "dB/Oct"),
+midFreqSlider(*audioProcessor.apvts.getParameter("Mid Frequency"), "Hz"),
+midGainSlider(*audioProcessor.apvts.getParameter("Mid Gain"), "dB"),
+midQualitySlider(*audioProcessor.apvts.getParameter("Mid Quality"), ""),
 
 responseCurveComponent(audioProcessor),
 peakFreqSliderAttachment(audioProcessor.apvts, "Peak Frequency", peakFreqSlider),
@@ -243,7 +249,10 @@ peakQualitySliderAttachment(audioProcessor.apvts, "Peak Quality", peakQualitySli
 lowCutFreqSliderAttachment(audioProcessor.apvts, "Low Cut Freq", lowCutFreqSlider),
 highCutFreqSliderAttachment(audioProcessor.apvts, "High Cut Freq", highCutFreqSlider),
 lowCutSlopeSliderAttachment(audioProcessor.apvts, "Low Cut Slope", lowCutSlopeSlider),
-highCutSlopeSliderAttachment(audioProcessor.apvts, "High Cut Slope", highCutSlopeSlider)
+highCutSlopeSliderAttachment(audioProcessor.apvts, "High Cut Slope", highCutSlopeSlider),
+midFreqSliderAttachment(audioProcessor.apvts, "Mid Frequency", midFreqSlider),
+midGainSliderAttachment(audioProcessor.apvts, "Mid Gain", midGainSlider),
+midQualitySliderAttachment(audioProcessor.apvts, "Mid Quality", midQualitySlider)
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
@@ -296,6 +305,6 @@ std::vector<juce::Component*> FiltEQAudioProcessorEditor::getComps()
 {
     return
     {
-      &peakFreqSlider, &peakGainSlider, &peakQualitySlider, &lowCutFreqSlider, &highCutFreqSlider, &lowCutSlopeSlider, &highCutSlopeSlider, &responseCurveComponent
+        &peakFreqSlider, &peakGainSlider, &peakQualitySlider, &lowCutFreqSlider, &highCutFreqSlider, &lowCutSlopeSlider, &highCutSlopeSlider, &responseCurveComponent, &midFreqSlider, &midGainSlider, &midQualitySlider
     };
 }
