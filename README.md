@@ -1,5 +1,6 @@
-# FiltEQ is a parametric, 4 Band audio equalizer plugin built using the JUCE framework!
-# The current version is simply the barebones EQ with the filters and response curve working but there's many updates I plan to make for this plugin over the coming months
+# FiltEQ 
+- FiltEQ is a parametric, 4 Band audio equalizer plugin built using the JUCE framework!
+- The current version is simply the barebones EQ with the filters and response curve working but there's many updates I plan to make for this plugin over the coming months
 
 
 
